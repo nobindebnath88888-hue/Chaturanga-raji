@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Strategy Hub — Diagonal Teams Chess</title>
+<title>Strategy Hub — Chaturanga Teams</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -430,7 +430,7 @@ input[type=text]:focus{border-color:#b8860b;box-shadow:0 0 10px rgba(180,140,50,
    <div>
     <div class="crown">&#9819;</div>
     <h1 class="gtitle">STRATEGY HUB</h1>
-    <p class="gsub">Diagonal Alliances &middot; Two Teams &middot; One Board</p>
+    <p class="gsub">Chaturanga &middot; Two Teams &middot; One Board</p>
    </div>
    <div class="lcard">
     <input type="text" id="ni" placeholder="Your name&hellip;" maxlength="20"/>
@@ -485,8 +485,8 @@ input[type=text]:focus{border-color:#b8860b;box-shadow:0 0 10px rgba(180,140,50,
      </div>
     </div>
     <div class="legbox">
-     <div class="legrow">K=King &nbsp; R=Rook &nbsp; N=Knight</div>
-     <div class="legrow">B=Bishop &nbsp; Q=Queen (promoted) &nbsp; P=Pawn</div>
+     <div class="legrow">K=Raja (King) &nbsp; R=Ratha (Chariot) &nbsp; N=Ashva (Horse)</div>
+     <div class="legrow">B=Nauka (Boat, jumps 2 diagonally) &nbsp; P=Padati (Pawn)</div>
     </div>
    </div>
 
@@ -605,7 +605,9 @@ const TEAMS={red:'A',gold:'A',blue:'B',green:'B'};
 // Index into this array gives turn order, skipping eliminated players
 const TURN_ORDER=['red','blue','gold','green'];
 
-const PAWN_DIR  ={red:-1, blue:1,  green:-1, gold:1};
+const PAWN_DIR  ={red:-1, blue:+1, green:-1, gold:+1};
+// Row-based for Red/Gold (move vertically); Col-based for Blue/Green (move horizontally)
+const PAWN_AXIS ={red:'row', blue:'col', green:'col', gold:'row'};
 const PAWN_PROMO={red:0,  blue:7,  green:0,  gold:7};
 const PAWN_START={red:6,  blue:1,  green:6,  gold:1};
 
@@ -697,43 +699,43 @@ function initBoard(){
   const b=Array(64).fill(null);
   const P=(r,c,t,co)=>{b[r*8+c]={type:t,color:co}};
 
-  // ── Diagonal Teams — Rotated Corner Layout ─────────────────────
-  // Each player's pieces face inward toward the board centre.
-  // No Rooks — castling disabled.
+  // ── Chaturanga (Chaturaji) — Authentic Corner Layout ──────────────
+  // Pieces per player: Raja(K), Ashva(N), Gaja/Ratha(R), Nauka/Boat(B), 4×Padati(P)
+  // Back rank from outer corner → inner (toward centre): Boat · Knight · Rook · King
+  // Pawns occupy the rank/file directly in front of the back rank.
   //
-  // Team A (diagonal): Red (BL, faces UP) + Gold (TR, faces DOWN)
-  // Team B (diagonal): Blue (TL, faces RIGHT) + Green (BR, faces LEFT)
+  // Team A (diagonal): Red (BL, faces UP) ←→ Gold (TR, faces DOWN)
+  // Team B (diagonal): Blue (TL, faces RIGHT) ←→ Green (BR, faces LEFT)
+  // Same-team allies are on opposite corners, facing each other.
 
   // Red (Black) — Bottom-Left, horizontal, faces UP
-  // Back rank row 7: K N Q B  |  Pawns row 6
-  P(7,0,'K','red');  P(7,1,'N','red');  P(7,2,'Q','red');  P(7,3,'B','red');
+  // Back rank row 7 (outer→inner): B(col0) N(col1) R(col2) K(col3)
+  // Pawns row 6, cols 0-3
+  P(7,0,'B','red');  P(7,1,'N','red');  P(7,2,'R','red');  P(7,3,'K','red');
   P(6,0,'P','red');  P(6,1,'P','red');  P(6,2,'P','red');  P(6,3,'P','red');
 
   // Blue (White) — Top-Left, vertical, faces RIGHT
-  // Back rank col 0: K N Q B  |  Pawns col 1
-  P(0,0,'K','blue'); P(1,0,'N','blue'); P(2,0,'Q','blue'); P(3,0,'B','blue');
+  // Back rank col 0 (outer→inner): B(row0) N(row1) R(row2) K(row3)
+  // Pawns col 1, rows 0-3
+  P(0,0,'B','blue'); P(1,0,'N','blue'); P(2,0,'R','blue'); P(3,0,'K','blue');
   P(0,1,'P','blue'); P(1,1,'P','blue'); P(2,1,'P','blue'); P(3,1,'P','blue');
 
-  // Gold — Top-Right, horizontal, faces DOWN
-  // Back rank row 0: B Q N K  |  Pawns row 1
-  P(0,4,'B','gold'); P(0,5,'Q','gold'); P(0,6,'N','gold'); P(0,7,'K','gold');
+  // Gold — Top-Right, horizontal, faces DOWN (opposite Red)
+  // Back rank row 0 (inner→outer): K(col4) R(col5) N(col6) B(col7)
+  // Pawns row 1, cols 4-7
+  P(0,4,'K','gold'); P(0,5,'R','gold'); P(0,6,'N','gold'); P(0,7,'B','gold');
   P(1,4,'P','gold'); P(1,5,'P','gold'); P(1,6,'P','gold'); P(1,7,'P','gold');
 
-  // Green (Red) — Bottom-Right, vertical, faces LEFT
-  // Back rank col 7: B Q N K  |  Pawns col 6
-  P(4,7,'B','green'); P(5,7,'Q','green'); P(6,7,'N','green'); P(7,7,'K','green');
+  // Green (Red/Crimson) — Bottom-Right, vertical, faces LEFT (opposite Blue)
+  // Back rank col 7 (inner→outer): K(row4) R(row5) N(row6) B(row7)
+  // Pawns col 6, rows 4-7
+  P(4,7,'K','green'); P(5,7,'R','green'); P(6,7,'N','green'); P(7,7,'B','green');
   P(4,6,'P','green'); P(5,6,'P','green'); P(6,6,'P','green'); P(7,6,'P','green');
 
   return b;
 }
 
-// Castling rights per color: K=king-side (toward centre), Q=queen-side (away from centre)
-// Given the layout above:
-//   Red:   King at col0, Rook at col3 — castling moves king RIGHT (king-side, toward rook)
-//   Blue:  King at col7, Rook at col4 — castling moves king LEFT  (king-side, toward rook)
-//   Green: King at col7, Rook at col4 — castling moves king LEFT  (king-side, toward rook)
-//   Gold:  King at col0, Rook at col3 — castling moves king RIGHT (king-side, toward rook)
-// We track a single 'K' flag per color meaning "king-side rook castling available"
+// Castling rights — Chaturanga has no castling rule, all disabled
 function initCastlingRights(){
   // No rooks in this layout — castling disabled for all players
   const cr={};
@@ -780,23 +782,46 @@ function genMoves(board,row,col,color,cr){
 
   if(pc.type==='P'){
     const dir=PAWN_DIR[color];
-    const tr=row+dir;
-    if(tr>=0&&tr<=7){
-      if(!gp(board,tr,col)){
-        mv.push({from:[row,col],to:[tr,col],capture:false,promo:tr===PAWN_PROMO[color]});
-        // Double push from starting rank
-        if(row===PAWN_START[color]){
-          const tr2=row+dir*2;
-          if(tr2>=0&&tr2<=7&&!gp(board,tr2,col))
-            mv.push({from:[row,col],to:[tr2,col],capture:false,promo:false,doublePush:true});
+    const axis=PAWN_AXIS[color];
+
+    if(axis==='row'){
+      // Red (moves UP, row-1) and Gold (moves DOWN, row+1)
+      const tr=row+dir;
+      if(tr>=0&&tr<=7){
+        if(!gp(board,tr,col)){
+          mv.push({from:[row,col],to:[tr,col],capture:false,promo:tr===PAWN_PROMO[color]});
+          if(row===PAWN_START[color]){
+            const tr2=row+dir*2;
+            if(tr2>=0&&tr2<=7&&!gp(board,tr2,col))
+              mv.push({from:[row,col],to:[tr2,col],capture:false,promo:false,doublePush:true});
+          }
         }
+        [-1,1].forEach(dc=>{
+          if(col+dc<0||col+dc>7)return;
+          const t=gp(board,tr,col+dc);
+          if(t&&isEnemy(t,color))
+            mv.push({from:[row,col],to:[tr,col+dc],capture:true,promo:tr===PAWN_PROMO[color]});
+        });
       }
-      [-1,1].forEach(dc=>{
-        if(col+dc<0||col+dc>7)return;
-        const t=gp(board,tr,col+dc);
-        if(t&&isEnemy(t,color))
-          mv.push({from:[row,col],to:[tr,col+dc],capture:true,promo:tr===PAWN_PROMO[color]});
-      });
+    } else {
+      // Blue (moves RIGHT, col+1) and Green (moves LEFT, col-1)
+      const tc=col+dir;
+      if(tc>=0&&tc<=7){
+        if(!gp(board,row,tc)){
+          mv.push({from:[row,col],to:[row,tc],capture:false,promo:tc===PAWN_PROMO[color]});
+          if(col===PAWN_START[color]){
+            const tc2=col+dir*2;
+            if(tc2>=0&&tc2<=7&&!gp(board,row,tc2))
+              mv.push({from:[row,col],to:[row,tc2],capture:false,promo:false,doublePush:true});
+          }
+        }
+        [-1,1].forEach(dr=>{
+          if(row+dr<0||row+dr>7)return;
+          const t=gp(board,row+dr,tc);
+          if(t&&isEnemy(t,color))
+            mv.push({from:[row,col],to:[row+dr,tc],capture:true,promo:tc===PAWN_PROMO[color]});
+        });
+      }
     }
   }
   else if(pc.type==='R'){
@@ -806,7 +831,8 @@ function genMoves(board,row,col,color,cr){
     [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr,dc])=>step(dr,dc));
   }
   else if(pc.type==='B'){
-    [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(([dr,dc])=>slide(dr,dc));
+    // Nauka (Boat): jumps exactly 2 squares diagonally — authentic Chaturanga alfil move
+    [[-2,-2],[-2,2],[2,-2],[2,2]].forEach(([dr,dc])=>step(dr,dc));
   }
   else if(pc.type==='Q'){
     [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]].forEach(([dr,dc])=>slide(dr,dc));
@@ -1388,20 +1414,20 @@ function handleClick(e){
 
 function execMove(move){
   if(move.promo){pendPromo=move;showPromoModal();}
-  else commitMove(move,'Q');
+  else commitMove(move,'R');
 }
 
 function showPromoModal(){
   const modal=document.getElementById('pm'),ch=document.getElementById('pc2');
   ch.innerHTML='';
-  // Standard chess promotion pieces
-  ['Q','R','B','N'].forEach(type=>{
+  // Chaturanga promotion pieces: Rook (Gaja), Knight (Ashva), Boat (Nauka) — no Queen
+  ['R','N','B'].forEach(type=>{
     const btn=document.createElement('div');btn.className='pb';
     const cv=document.createElement('canvas');cv.width=cv.height=56;
     setTimeout(()=>drawPiece(cv.getContext('2d'),type,myColor,28,28,56),10);
     btn.appendChild(cv);
     const lbl=document.createElement('span');
-    lbl.textContent={Q:'Queen',R:'Rook',B:'Bishop',N:'Knight'}[type];
+    lbl.textContent={R:'Ratha',N:'Ashva',B:'Nauka'}[type];
     btn.appendChild(lbl);
     btn.addEventListener('click',()=>{modal.classList.add('hidden');commitMove(pendPromo,type);pendPromo=null;});
     ch.appendChild(btn);
